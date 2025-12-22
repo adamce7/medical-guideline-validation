@@ -107,9 +107,7 @@ This installs:
 
 #### 4. Configure Environment Variables
 
-```bash
-cp .env.example .env
-```
+Create and edit a .env file, to include your API key and model and temperature.
 
 Edit `.env` file and add your OpenAI API key:
 
