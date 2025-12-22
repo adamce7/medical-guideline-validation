@@ -47,8 +47,7 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
 # 4. Set up environment variables
-cp .env.example .env
-# Edit .env and add your OpenAI API key
+Create and edit .env and add your OpenAI API key
 
 # 5. Run the server
 python main.py
