@@ -362,7 +362,7 @@ medical-guideline-validation/
 ### Run Test Script
 
 ```bash
-python tests/test_validator.py
+python -m test.test_guidelines_validator
 ```
 
 ### Manual Testing with cURL
@@ -464,26 +464,12 @@ We welcome contributions! Please follow these steps:
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📄 License
-
-This project is licensed under the MIT License - see LICENSE file for details.
 
 ## ⚠️ Disclaimer
 
 **IMPORTANT:** This is a clinical decision support tool only. All recommendations must be reviewed by qualified healthcare professionals before implementation. Do not use for autonomous decision-making. AI systems can make errors - always verify recommendations against current guidelines.
 
-## 📞 Support
 
-- **Issues:** [GitHub Issues](https://github.com/yourusername/medical-guideline-validation/issues)
-- **Documentation:** [Full API Docs](http://localhost:8000/docs)
-- **Email:** your.email@example.com
-
-## 🙏 Acknowledgments
-
-- OpenAI for GPT-4 API
-- Surviving Sepsis Campaign for guidelines
-- AHA/ACC for cardiac protocols
-- IDSA for infectious disease guidelines
 
 ---
 
