@@ -47,7 +47,8 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 
 # 4. Set up environment variables
-Create and edit .env and add your OpenAI API key
+cp .env.example .env
+# Edit .env and add your OpenAI API key
 
 # 5. Run the server
 python main.py
@@ -105,19 +106,21 @@ This installs:
 - Sentence Transformers (embeddings)
 - And more...
 
-#### 4. Configure Environment Variables
+#### 4. Configure Environment
 
-Create and edit a .env file, to include your API key and model and temperature.
+```bash
+cp .env.example .env
+```
 
-Edit `.env` file and add your OpenAI API key:
+Edit `.env` and add your OpenAI API key:
 
 ```env
 OPENAI_API_KEY=sk-your-actual-key-here
 OPENAI_MODEL=gpt-4o
-OPENAI_TEMPERATURE=0.1
+OPENAI_TEMPERATURE=0.2
 ```
 
-**Important:** Never commit your `.env` file to Git! It's already in `.gitignore`.
+**Important:** Never commit `.env` to Git!
 
 ## ⚙️ Configuration
 
