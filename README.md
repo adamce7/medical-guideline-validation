@@ -391,7 +391,7 @@ For Patient P003 (Septic Shock), expect:
 
 ## 🚀 Deployment
 
-### Docker Deployment (Recommended)
+### Docker Deployment (Work in Progress)
 
 ```dockerfile
 FROM python:3.10-slim
