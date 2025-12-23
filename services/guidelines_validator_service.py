@@ -7,7 +7,7 @@ import os
 import json
 from typing import List, Dict, Any, Tuple, Optional
 from datetime import datetime
-import openai
+from openai import OpenAI  # Import the OpenAI client class
 
 from models.schemas import (
     MedicalNote, 
@@ -25,7 +25,8 @@ class OpenAIGuidelineValidator:
     
     def __init__(self):
         self.initialized = False
-        self.openai_api_key = None  # Will be set during initialize()
+        self.openai_api_key = None
+        self.client = None  # OpenAI client instance
         
         # Model configuration
         self.model = "gpt-4o"  # or "gpt-4-turbo" or "gpt-4"
@@ -34,7 +35,7 @@ class OpenAIGuidelineValidator:
     def initialize(self):
         """Initialize the validator."""
         if not self.initialized:
-            # Load API key from environment (now that config.py has loaded .env)
+            # Load API key from environment
             self.openai_api_key = os.environ.get("OPENAI_API_KEY")
             
             if not self.openai_api_key:
@@ -42,8 +43,8 @@ class OpenAIGuidelineValidator:
                 print("   Make sure your .env file contains: OPENAI_API_KEY=sk-...")
                 return
             
-            # Configure OpenAI
-            openai.api_key = self.openai_api_key
+            # Initialize OpenAI client (NEW API - v1.0+)
+            self.client = OpenAI(api_key=self.openai_api_key)
             
             # Initialize guidelines service
             guidelines_service.initialize()
@@ -271,22 +272,24 @@ For EACH issue identified, you MUST provide:
 
 # OUTPUT FORMAT
 
-Respond with ONLY a valid JSON array. Each element must follow this exact structure:
+Respond with ONLY a valid JSON object with an "issues" array. Each element must follow this exact structure:
 
-[
-  {{
-    "issue": "Clear description of the problem",
-    "reasoning": "Why this matters based on guidelines and patient context",
-    "affected_orders": ["order_id_1", "order_id_2"],
-    "severity": "critical|high|moderate|low|routine",
-    "recommendations": [
-      "Specific action 1",
-      "Specific action 2"
-    ],
-    "guideline_reference": "Name of guideline or protocol",
-    "requires_human_review": true|false
-  }}
-]
+{{
+  "issues": [
+    {{
+      "issue": "Clear description of the problem",
+      "reasoning": "Why this matters based on guidelines and patient context",
+      "affected_orders": ["order_id_1", "order_id_2"],
+      "severity": "critical|high|moderate|low|routine",
+      "recommendations": [
+        "Specific action 1",
+        "Specific action 2"
+      ],
+      "guideline_reference": "Name of guideline or protocol",
+      "requires_human_review": true|false
+    }}
+  ]
+}}
 
 # SEVERITY DEFINITIONS
 
@@ -298,7 +301,7 @@ Respond with ONLY a valid JSON array. Each element must follow this exact struct
 
 # IMPORTANT RULES
 
-1. If NO issues are found, return an empty array: []
+1. If NO issues are found, return: {{"issues": []}}
 2. Be specific - reference exact guidelines, lab values, and medication names
 3. Prioritize patient safety over guideline adherence
 4. Consider the full clinical context, not just isolated data points
@@ -310,7 +313,7 @@ Respond with JSON only, no other text:"""
         return prompt
     
     # =========================================================================
-    # OpenAI API Call
+    # OpenAI API Call (FIXED FOR v1.0+)
     # =========================================================================
     
     async def _call_openai_for_validation(
@@ -321,12 +324,12 @@ Respond with JSON only, no other text:"""
         Call OpenAI API and parse response into MedicalNote objects.
         """
         
-        if not self.openai_api_key:
-            raise Exception("OpenAI API key not configured")
+        if not self.client:
+            raise Exception("OpenAI client not initialized")
         
         try:
-            # Call OpenAI API
-            response = openai.chat.completions.create(
+            # Call OpenAI API using the new client
+            response = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {
@@ -346,18 +349,15 @@ Respond with JSON only, no other text:"""
             content = response.choices[0].message.content
             
             # Parse JSON
-            issues = json.loads(content)
+            response_data = json.loads(content)
             
-            # Handle both array and object responses
-            if isinstance(issues, dict):
-                # If wrapped in an object, extract the array
-                if "issues" in issues:
-                    issues = issues["issues"]
-                elif "medical_notes" in issues:
-                    issues = issues["medical_notes"]
-                else:
-                    # Single issue as dict
-                    issues = [issues]
+            # Extract issues array
+            if isinstance(response_data, dict):
+                issues = response_data.get("issues", [])
+            elif isinstance(response_data, list):
+                issues = response_data
+            else:
+                issues = []
             
             # Convert to MedicalNote objects
             medical_notes = []
