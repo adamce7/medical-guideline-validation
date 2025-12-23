@@ -25,13 +25,7 @@ class OpenAIGuidelineValidator:
     
     def __init__(self):
         self.initialized = False
-        self.openai_api_key = os.environ.get("OPENAI_API_KEY")
-        
-        if not self.openai_api_key:
-            print("⚠️  Warning: OPENAI_API_KEY not found in environment variables")
-        
-        # Configure OpenAI
-        openai.api_key = self.openai_api_key
+        self.openai_api_key = None  # Will be set during initialize()
         
         # Model configuration
         self.model = "gpt-4o"  # or "gpt-4-turbo" or "gpt-4"
@@ -40,12 +34,24 @@ class OpenAIGuidelineValidator:
     def initialize(self):
         """Initialize the validator."""
         if not self.initialized:
-            guidelines_service.initialize()
-            self.initialized = True
-            print("✅ OpenAI Guideline Validator initialized")
+            # Load API key from environment (now that config.py has loaded .env)
+            self.openai_api_key = os.environ.get("OPENAI_API_KEY")
             
             if not self.openai_api_key:
-                print("⚠️  Set OPENAI_API_KEY environment variable to enable AI validation")
+                print("⚠️  ERROR: OPENAI_API_KEY not found in environment variables")
+                print("   Make sure your .env file contains: OPENAI_API_KEY=sk-...")
+                return
+            
+            # Configure OpenAI
+            openai.api_key = self.openai_api_key
+            
+            # Initialize guidelines service
+            guidelines_service.initialize()
+            
+            self.initialized = True
+            print("✅ OpenAI Guideline Validator initialized")
+            print(f"   Using model: {self.model}")
+            print(f"   API Key: {self.openai_api_key[:15]}...{self.openai_api_key[-4:]}")
     
     # =========================================================================
     # Main Validation Method (OpenAI-Powered)

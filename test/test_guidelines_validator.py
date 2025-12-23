@@ -314,6 +314,76 @@ async def interactive_ai_demo():
     
     print("\n✅ AI analysis complete!")
     print(f"Found {result.total_issues_found} issues requiring attention.")
+    
+
+async def runtime_benchmark_test(
+    patient_id: str = "P003",
+    runs: int = 10,
+    warmup_runs: int = 1,
+    min_seconds: float = 5.0,
+    max_seconds: float = 15.0
+):
+    """
+    Runtime benchmark for AI validation.
+    Ensures average runtime stays within 5–15 seconds.
+    """
+
+    print_separator("AI RUNTIME BENCHMARK TEST")
+    print(f"Patient: {patient_id}")
+    print(f"Runs: {runs} (warm-up: {warmup_runs})")
+    print(f"Expected average runtime: {min_seconds}-{max_seconds} seconds\n")
+
+    patient_data = get_patient_data(patient_id)
+    if not patient_data:
+        print(f"❌ Patient {patient_id} not found!")
+        return
+
+    if not openai_guideline_validator.initialized:
+        print("🤖 Initializing OpenAI-powered validator...")
+        openai_guideline_validator.initialize()
+
+    timings = []
+
+    for i in range(runs):
+        print(f"⏱️  Run {i + 1}/{runs}...", end=" ", flush=True)
+
+        start = datetime.now()
+
+        await openai_guideline_validator.validate_orders(
+            patient_id=patient_id,
+            active_orders=patient_data["active_orders"],
+            clinical_context=patient_data["clinical_context"],
+            patient_record=patient_data["patient"],
+            specialty=patient_data["patient"]["department"]
+        )
+
+        duration = (datetime.now() - start).total_seconds()
+        timings.append(duration)
+
+        label = "warm-up" if i < warmup_runs else "measured"
+        print(f"{duration:.2f}s ({label})")
+
+    measured = timings[warmup_runs:]
+    avg_runtime = sum(measured) / len(measured)
+
+    print("\n📊 BENCHMARK RESULTS")
+    print("─" * 80)
+    for i, t in enumerate(timings):
+        label = "warm-up" if i < warmup_runs else "measured"
+        print(f"Run {i + 1}: {t:.2f}s ({label})")
+
+    print(f"\n📈 Average runtime (measured): {avg_runtime:.2f}s")
+
+    if min_seconds <= avg_runtime <= max_seconds:
+        print("✅ BENCHMARK PASSED")
+        print(f"   Runtime within expected range ({min_seconds}-{max_seconds}s)")
+    else:
+        print("❌ BENCHMARK FAILED")
+        print(
+            f"   Average runtime {avg_runtime:.2f}s is outside "
+            f"expected range ({min_seconds}-{max_seconds}s)"
+        )
+
 
 
 def main():
@@ -336,7 +406,8 @@ def main():
     print("  2. Test specific patient")
     print("  3. Compare all patients (AI analysis)")
     print("  4. Interactive AI demo (step-by-step)")
-    print("  5. Exit")
+    print("  5. Benchmark runtime")
+    print("  6. Exit")
     
     choice = input("\nEnter choice (1-5): ").strip()
     
@@ -360,6 +431,9 @@ def main():
         asyncio.run(interactive_ai_demo())
     
     elif choice == "5":
+        asyncio.run(runtime_benchmark_test())
+
+    elif choice == "6":
         print("\nExiting...")
         return
     
